@@ -1,0 +1,29 @@
+set term png enhanced size 1560,980
+set output "Aerodynamics Normal Coefficient.png"
+
+set title "Aerodynamics Normal Coefficient"
+set xlabel "Angle of Attack"
+set ylabel "Cn"
+set grid xtics mytics  # draw lines for each ytics and mytics
+set grid xtics mxtics  # draw lines for each ytics and mytics
+set mytics 2           # set the spacing for the mytics
+set grid
+plot [0:45 ][-0.2:2]\
+ "experimentalCoeffs.dat" using 1:2 title 'Cn exp' with linespoints pointsize 2 linecolor rgb "blue", \
+ '0/forceCoeffs1/0/forceCoeffs.dat' using (0):((column(1) == iterations) ? ((column(4)*cos(0*pi/180))+(column(3)*sin(0*pi/180))):NaN) notitle with points pointtype 3 pointsize 1 lt rgb "red", \
+ '5/forceCoeffs1/0/forceCoeffs.dat' using (5):((column(1) == iterations) ? ((column(4)*cos(5*pi/180))+(column(3)*sin(5*pi/180))):NaN) notitle with points pointtype 3 pointsize 1 lt rgb "red", \
+ '10/forceCoeffs1/0/forceCoeffs.dat' using (10):((column(1) == iterations) ? ((column(4)*cos(10*pi/180))+(column(3)*sin(10*pi/180))):NaN) notitle with points pointtype 3 pointsize 1 lt rgb "red", \
+ '15/forceCoeffs1/0/forceCoeffs.dat' using (15):((column(1) == iterations) ? ((column(4)*cos(15*pi/180))+(column(3)*sin(15*pi/180))):NaN) notitle with points pointtype 3 pointsize 1 lt rgb "red", \
+ '20/forceCoeffs1/0/forceCoeffs.dat' using (20):((column(1) == iterations) ? ((column(4)*cos(20*pi/180))+(column(3)*sin(20*pi/180))):NaN) title 'Cn OpenFOAM' with points pointtype 3 pointsize 1 lt rgb "red", \
+ '22.5/forceCoeffs1/0/forceCoeffs.dat' using (22.5):((column(1) == iterations) ? ((column(4)*cos(22.5*pi/180))+(column(3)*sin(22.5*pi/180))):NaN) notitle with points pointtype 3 pointsize 1 lt rgb "red", \
+ '25/forceCoeffs1/0/forceCoeffs.dat' using (25):((column(1) == iterations) ? ((column(4)*cos(25*pi/180))+(column(3)*sin(25*pi/180))):NaN) notitle with points pointtype 3 pointsize 1 lt rgb "red", \
+'27.5/forceCoeffs1/0/forceCoeffs.dat' using (27.5):((column(1) == iterations) ? ((column(4)*cos(27.5*pi/180))+(column(3)*sin(27.5*pi/180))):NaN) notitle with points pointtype 3 pointsize 1 lt rgb "red", \
+ '30/forceCoeffs1/0/forceCoeffs.dat' using (30):((column(1) == iterations) ? ((column(4)*cos(30*pi/180))+(column(3)*sin(30*pi/180))):NaN) notitle with points pointtype 3 pointsize 1 lt rgb "red", \
+ '32.5/forceCoeffs1/0/forceCoeffs.dat' using (32.5):((column(1) == iterations) ? ((column(4)*cos(32.5*pi/180))+(column(3)*sin(32.5*pi/180))):NaN) notitle with points pointtype 3 pointsize 1 lt rgb "red", \
+ '35/forceCoeffs1/0/forceCoeffs.dat' using (35):((column(1) == iterations) ? ((column(4)*cos(35*pi/180))+(column(3)*sin(35*pi/180))):NaN) notitle with points pointtype 3 pointsize 1 lt rgb "red", \
+'37.5/forceCoeffs1/0/forceCoeffs.dat' using (37.5):((column(1) == iterations) ? ((column(4)*cos(37.5*pi/180))+(column(3)*sin(37.5*pi/180))):NaN) notitle with points pointtype 3 pointsize 1 lt rgb "red", \
+'40/forceCoeffs1/0/forceCoeffs.dat' using (40):((column(1) == iterations) ? ((column(4)*cos(40*pi/180))+(column(3)*sin(40*pi/180))):NaN) notitle with points pointtype 3 pointsize 1 lt rgb "red", \
+ '45/forceCoeffs1/0/forceCoeffs.dat' using (45):((column(1) == iterations) ? ((column(4)*cos(45*pi/180))+(column(3)*sin(45*pi/180))):NaN) notitle with points pointtype 3 pointsize 1 lt rgb "red", \
+
+bind "s" "unset output ; exit gnuplot"
+

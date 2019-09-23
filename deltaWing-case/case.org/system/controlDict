@@ -1,0 +1,110 @@
+FoamFile
+{
+    version     2.3;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     simpleFoam;
+
+startFrom       latestTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime 100;
+
+deltaT          1;
+
+writeControl    timeStep; //clockTime;
+
+writeInterval   100;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  6;
+
+writeCompression uncompressed;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable true;
+
+functions
+{
+  #include "streamLines"
+//  #include "cuttingPlane"
+  #include "forceCoeffs"
+  #includeFunc singleGraph
+
+	yPlus
+	{
+		type 		yPlus;
+		libs		("libfieldFunctionObjects.so");
+		writeControl	writeTime;
+/*	}
+
+        vorticity1
+        {
+                type            vorticity;
+                libs            ("libfieldFunctionObjects.so");
+                writeControl    writeTime;
+        }
+
+	fieldMinMax1
+	{
+	    type        fieldMinMax;
+	    libs        ("libfieldFunctionObjects.so");
+	    
+	    writeToFile yes;
+	    log         yes;
+	    location    yes;
+	    mode        magnitude;
+	    fields      (U);
+	}
+
+	fieldMinMax2
+	{
+	    type        fieldMinMax;
+	    libs        ("libfieldFunctionObjects.so");
+	    
+	    writeToFile yes;
+	    log         yes;
+	    location    yes;
+	    mode        magnitude;
+	    fields      (p);
+	}
+	
+	    Lambda2
+    {
+        functionObjectLibs  ( "libutilityFunctionObjects.so" );
+        type                Lambda2;
+
+        outputControl       outputTime;
+    }
+
+    Q
+    {
+        functionObjectLibs  ( "libutilityFunctionObjects.so" );
+        type                Q;
+
+        outputControl       outputTime;
+    }
+
+    vorticity
+    {
+        functionObjectLibs  ( "libutilityFunctionObjects.so" );
+        type                vorticity;
+
+        outputControl       outputTime;
+    } */
+}
+// ************************************************************************* //

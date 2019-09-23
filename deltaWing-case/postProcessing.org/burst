@@ -1,0 +1,25 @@
+set term png enhanced size 1560,980
+set output "burst.png"
+
+set title "Burst point location (% chord)"
+set xlabel "Angle of Attack (deg)"
+set ylabel "x/c (x=0 at Apex)"
+set xtics 2.5
+set ytics 10
+set grid xtics mytics  # draw lines for each ytics and mytics
+set grid xtics mxtics  # draw lines for each ytics and mytics
+set mytics 2           # set the spacing for the mytics
+set grid
+plot [17.5:40][0:150]\
+ "experimentalCoeffs.dat" using 5:6 title 'burst exp' with linespoints pointsize 2 linecolor rgb "blue", \
+ 'Umin_20' using (20):((((0.13543 - (((column(2))*sin(20*pi/180)))+(((column(1))*cos(20*pi/180))))/0.13543)*100)) title 'burst OpenFOAM (Ucore min)' with points pointtype 3 pointsize 1 lt rgb "red", \
+ 'Umin_22.5' using (22.5):((((0.13543 - (((column(2))*sin(22.5*pi/180)))+(((column(1))*cos(22.5*pi/180))))/0.13543)*100)) notitle with points pointtype 3 pointsize 1 lt rgb "red", \
+ 'Umin_25' using (25):((((0.13543 - (((column(2))*sin(25*pi/180)))+(((column(1))*cos(25*pi/180))))/0.13543)*100)) notitle with points pointtype 3 pointsize 1 lt rgb "red", \
+ 'Umin_27.5' using (27.5):((((0.13543 - (((column(2))*sin(27.5*pi/180)))+(((column(1))*cos(27.5*pi/180))))/0.13543)*100)) notitle with points pointtype 3 pointsize 1 lt rgb "red", \
+ 'Umin_30' using (30):((((0.13543 - (((column(2))*sin(30*pi/180)))+(((column(1))*cos(30*pi/180))))/0.13543)*100)) notitle with points pointtype 3 pointsize 1 lt rgb "red", \
+ 'Umin_32.5' using (32.5):((((0.13543 - (((column(2))*sin(32.5*pi/180)))+(((column(1))*cos(32.5*pi/180))))/0.13543)*100)) notitle with points pointtype 3 pointsize 1 lt rgb "red", \
+ 'Umin_35' using (35):((((0.13543 - (((column(2))*sin(35*pi/180)))+(((column(1))*cos(35*pi/180))))/0.13543)*100)) notitle with points pointtype 3 pointsize 1 lt rgb "red", \
+ 'Umin_37.5' using (37.5):((((0.13543 - (((column(2))*sin(37.5*pi/180)))+(((column(1))*cos(37.5*pi/180))))/0.13543)*100)) notitle with points pointtype 3 pointsize 1 lt rgb "red", \
+
+bind "s" "unset output ; exit gnuplot"
+

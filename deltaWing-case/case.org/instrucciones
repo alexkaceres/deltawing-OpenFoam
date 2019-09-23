@@ -1,0 +1,5 @@
+instrucciones
+1-Abrir terminal de linux dentro de la carpeta del caso
+2-escribir ./Allclean para resetear el caso 
+3-Escribir ./Allrun para realizar las simulaciones 
+Nota: dentro del archivo Allrun se encuentran los parametros como Angulo de ataque, número de iteraciones y cantidad de particiones

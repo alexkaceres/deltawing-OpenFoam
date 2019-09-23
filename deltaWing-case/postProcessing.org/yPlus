@@ -1,0 +1,31 @@
+
+set term png enhanced size 1560,980
+set output "yPlus.png"
+
+set title "yPlus"
+set xlabel "Angle of Attack"
+set ylabel "yPlus"
+set grid xtics mytics  # draw lines for each ytics and mytics
+set grid xtics mxtics  # draw lines for each ytics and mytics
+set mytics 2           # set the spacing for the mytics
+set grid
+
+plot [0:45][]\
+       '0/yPlus/0/yPlus.dat' using (0):((column(1) == iterations) ? column(5):NaN) pointtype 3 pointsize 2 lt rgb "red" title 'wall', \
+       '5/yPlus/0/yPlus.dat' using (5):((column(1) == iterations) ? column(5):NaN) pointtype 3 pointsize 2 lt rgb "red" notitle, \
+       '10/yPlus/0/yPlus.dat' using (10):((column(1) == iterations) ? column(5):NaN) pointtype 3 pointsize 2 lt rgb "red" notitle, \
+       '15/yPlus/0/yPlus.dat' using (15):((column(1) == iterations) ? column(5):NaN) pointtype 3 pointsize 2 lt rgb "red" notitle, \
+       '20/yPlus/0/yPlus.dat' using (20):((column(1) == iterations) ? column(5):NaN) pointtype 3 pointsize 2 lt rgb "red" notitle, \
+       '22.5/yPlus/0/yPlus.dat' using (22.5):((column(1) == iterations) ? column(5):NaN) pointtype 3 pointsize 2 lt rgb "red" notitle, \
+       '25/yPlus/0/yPlus.dat' using (25):((column(1) == iterations) ? column(5):NaN) pointtype 3 pointsize 2 lt rgb "red" notitle, \
+       '27.5/yPlus/0/yPlus.dat' using (27.5):((column(1) == iterations) ? column(5):NaN) pointtype 3 pointsize 2 lt rgb "red" notitle, \
+       '30/yPlus/0/yPlus.dat' using (30):((column(1) == iterations) ? column(5):NaN) pointtype 3 pointsize 2 lt rgb "red" notitle, \
+       '32.5/yPlus/0/yPlus.dat' using (32.5):((column(1) == iterations) ? column(5):NaN) pointtype 3 pointsize 2 lt rgb "red" notitle, \
+       '35/yPlus/0/yPlus.dat' using (35):((column(1) == iterations) ? column(5):NaN) pointtype 3 pointsize 2 lt rgb "red" notitle, \
+       '37.5/yPlus/0/yPlus.dat' using (37.5):((column(1) == iterations) ? column(5):NaN) pointtype 3 pointsize 2 lt rgb "red" notitle, \
+       '40/yPlus/0/yPlus.dat' using (40):((column(1) == iterations) ? column(5):NaN) pointtype 3 pointsize 2 lt rgb "red" notitle, \
+       '45/yPlus/0/yPlus.dat' using (45):((column(1) == iterations) ? column(5):NaN) pointtype 3 pointsize 2 lt rgb "red" notitle, \
+
+
+bind "s" "unset output ; exit gnuplot"
+

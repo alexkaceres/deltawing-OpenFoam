@@ -1,0 +1,33 @@
+#!/bin/bash
+
+sed -i "s/\(.*numberOfSubdomains[ \t]*\)[0-9].*;/numberOfSubdomains NProc;/g" system/decomposeParDict
+
+# copy mesh and initial conditions
+echo " 1. Initialize the case."
+rm -rf 0 log.all constant/polyMesh processor* *.log
+cp -rf 0.org 0
+if [[ ! -f ../mesh/last/polyMesh/boundary ]]
+then
+    echo "Mesh not found in mesh/last."
+    exit
+fi
+cp -rf ../mesh/last/polyMesh constant/polyMesh
+
+# decompose and compute
+echo " 2. Parallel decomposition."
+decomposePar -force | tee -a log.all > decomposePar.log
+echo " 3. Mesh optimization (renumberMesh)."
+mpiexec -np NProc renumberMesh -parallel -overwrite | tee -a log.all > renumberMesh.log
+echo " 4. Starting iterations (potentialFoam, NProc CPUs)."
+mpiexec -np NProc potentialFoam -parallel | tee -a log.all > potentialFoam.log
+echo " 5. Steady-state simulation (simpleFoam, NProc CPUs)."
+mpiexec -np NProc simpleFoam -parallel | tee -a log.all > simpleFoam.log
+echo " 6. Parallel reconstruction."
+reconstructPar | tee -a log.all > reconstructPar.log
+echo " 7. Postprocessing."
+echo
+
+
+
+
+

@@ -1,0 +1,57 @@
+FoamFile
+{
+    version     2.1;
+    format      ascii;
+    class       volScalarField;
+    location    "0";
+    object      epsilon;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [ 0 2 -3 0 0 0 0 ];
+
+internalField   uniform 2.39;
+
+boundaryField
+{
+
+    inlet
+    {
+        type            fixedValue;
+        value           $internalField;
+    }
+    outlet
+    {
+   //   type            zeroGradient;
+	type            inletOutlet;
+        inletValue      $internalField;
+        value           $internalField;
+    }
+    lowerWall
+    {
+      type            epsilonWallFunction;
+      value           $internalField;
+    }
+    upperWall
+    {
+        type            slip;
+    }
+    deltaWing
+    {
+        type            epsilonWallFunction;
+        value           $internalField;
+    }
+    front
+    {
+    	type            epsilonWallFunction;
+	value           $internalField;
+    }
+
+    back
+    {
+        type            symmetryPlane;
+    }
+}
+
+
+// ************************************************************************* //

@@ -1,0 +1,493 @@
+#!/bin/bash
+
+#experiment=Cn                #evaluates only the angles reported for the normal aerodynamic coefficients           
+experiment=burst            #evaluates only the angles reported for the burst
+#experiment=individualAngle  #evaluates each angle individualy
+
+ mesh=1                    #1,2,3 (3 is most refined)
+ AttackAngle=20              #Angle of attack 0,5,10,15,20,22.5,25,27.5,30,32.5,35,37.5,40,45
+ wall=noWallFunction         #wallFunction/lowRe/noWallFunction
+ iterations=2000            #when to end 
+ NProc=8                    #number of cores in parallel
+ U=0.134                     # free-stream velocity 0.127/0.134
+ nu=1.0e-06                  #Kinematic viscosity of water at room temperature
+ c=0.09                      #aerodynamic media chord [m]
+ l=0.0063                    #Turbulence length scale [m]
+# k=0.0000006                 #Turbulence kinetic energy 
+# w=0.2254                    #Specific dissipation rate
+# epsilon=0.000000005         #Turbulence dissipation rate
+ turbulenceModel=kOmegaSST   #kOmegaSST/kEpsilon
+# Re=11430                    #Reynolds number based in the aerodynamic media chord
+
+k=0.00000067                #for U=0.134
+w=0.2378                    #for U=0.134
+epsilon=0.000000006         #for U=0.134
+Re=12600                    #for U=0.134
+#---------------------------------------------------------------------------------------------------------------------------
+startS=$(date +%s.%N)
+date >initialTime
+echo
+./Allclean
+
+cp -rnT postProcessing.org results
+sed -i "s/iterations/$iterations/g" results/normalCoeff
+sed -i "s/iterations/$iterations/g" results/dragCoeff
+sed -i "s/iterations/$iterations/g" results/liftCoeff
+sed -i "s/iterations/$iterations/g" results/yPlus
+sed -i "s/iterations/$iterations/g" results/burst
+
+if [ "$experiment" == "Cn" ];
+then
+for AoA in {0,5,10,15,20,25,30,35,40,45}
+
+do
+
+echo "  "
+echo "-------------------------------------------------------------------"
+echo "-------------------------------------------------------------------"
+echo "RUNNING TEST CASE  ${PWD##*/}"
+echo "RANS, mode=incompressible, $turbulenceModel, wall=$wall, NProc=$NProc"
+echo "Re=$Re, U=$U [m/s],nu=$nu , iterations=$iterations, AoA=$AoA"
+echo "-------------------------------------------------------------------"
+echo "-------------------------------------------------------------------"
+
+cp -rnT mesh.org mesh
+cd mesh
+
+if [ "$mesh" == "2" ];
+then
+sed -i "s/\(^[ \t]*mesh\).*[0-9]*;.*$/\1 (72 40 14);/g" system/blockMeshDict
+fi
+
+if [ "$mesh" == "3" ];
+then
+sed -i "s/\(^[ \t]*mesh\).*[0-9]*;.*$/\1 (144 80 28);/g" system/blockMeshDict
+fi
+
+echo 
+
+sed -i "s/NProc/$NProc/g" makeMesh
+sed -i "s/AoA/$AoA/g" makeMesh
+./makeMesh
+cp -rf checkMesh.log ../results/checkMesh_$AoA
+
+cd ../
+
+cp -rnT case.org case
+cd case
+
+if [ "$wall" == "lowRe" ];
+then
+rm -rf 0.org
+rm -rf wallFunction.org
+cp -rnT lowReWallFunction.org 0.org
+rm -rf lowReWallFunction.org
+fi
+
+if [ "$wall" == "wallFunction" ];
+then
+rm -rf 0.org
+rm -rf lowReWallFunction.org
+cp -rnT wallFunction.org 0.org
+rm -rf wallFunction.org
+fi
+
+rm -rf wallFunction.org
+rm -rf lowReWallFunction.org
+
+echo
+
+sed -i "s/NProc/$NProc/g" runSolver
+sed -i "s/\(^[ \t]*endTime\).*[0-9]*;.*$/\1 ${iterations};/g" system/controlDict
+sed -i "s/\(^[ \t]*writeInterval\).*[0-9]*;.*$/\1 ${iterations};/g" system/controlDict
+sed -i "s/\(^[ \t]*RASModel\).*[0-9]*;.*$/\1 ${turbulenceModel};/g" constant/turbulenceProperties
+sed -i "s/\(^[ \t]*internalField\).*[0-9]*;.*$/\1 uniform ($U 0 0);/g" 0.org/U
+sed -i "s/\(^[ \t]*internalField\).*[0-9]*;.*$/\1 uniform $k;/g" 0.org/k
+sed -i "s/\(^[ \t]*internalField\).*[0-9]*;.*$/\1 uniform $w;/g" 0.org/omega
+sed -i "s/\(^[ \t]*internalField\).*[0-9]*;.*$/\1 uniform $epsilon;/g" 0.org/epsilon
+sed -i "s/\(^[ \t]*magUInf\).*[0-9]*;.*$/\1 ${U};/g" system/forceCoeffs
+
+./runSolver
+gnuplot residuals_$turbulenceModel
+gnuplot p_residuals
+gnuplot U_residuals
+
+cp -rf postProcessing/ ../results/$AoA
+cp -rf residualMonitor.png ../results/residualMonitor_$AoA
+cd ../
+
+echo
+
+rm -rf mesh
+cp -rnT case case_$AoA
+rm -rf case
+
+sed -i "s/(/ /g" results/$AoA/fieldMinMax1/0/fieldMinMax.dat
+sed -i "s/)/ /g" results/$AoA/fieldMinMax1/0/fieldMinMax.dat
+sed -i "s/(/ /g" results/$AoA/fieldMinMax2/0/fieldMinMax.dat
+sed -i "s/)/ /g" results/$AoA/fieldMinMax2/0/fieldMinMax.dat
+
+done
+cd results/
+gnuplot normalCoeff
+gnuplot liftCoeff
+gnuplot dragCoeff
+gnuplot yPlus
+gnuplot burst
+cd ../
+
+fi
+########################################################################################################
+
+if [ "$experiment" == "burst" ];
+then
+for AoA in {20,22.5,25,27.5,30,32.5,35,37.5}
+do
+
+echo "  "
+echo "-------------------------------------------------------------------"
+echo "-------------------------------------------------------------------"
+echo "RUNNING TEST CASE  ${PWD##*/}"
+echo "RANS, mode=incompressible, $turbulenceModel, wall=$wall, NProc=$NProc"
+echo "Re=$Re, U=$U [m/s],nu=$nu , iterations=$iterations, AoA=$AoA"
+echo "-------------------------------------------------------------------"
+echo "-------------------------------------------------------------------"
+
+cp -rnT mesh.org mesh
+cd mesh
+
+if [ "$mesh" == "2" ];
+then
+sed -i "s/\(^[ \t]*mesh\).*[0-9]*;.*$/\1 (72 40 14);/g" system/blockMeshDict
+fi
+
+if [ "$mesh" == "3" ];
+then
+sed -i "s/\(^[ \t]*mesh\).*[0-9]*;.*$/\1 (144 80 28);/g" system/blockMeshDict
+fi
+
+echo 
+
+sed -i "s/NProc/$NProc/g" makeMesh
+sed -i "s/AoA/$AoA/g" makeMesh
+./makeMesh
+cp -rf checkMesh.log ../results/checkMesh_$AoA
+
+cd ../
+
+cp -rnT case.org case
+cd case
+
+if [ "$wall" == "lowRe" ];
+then
+rm -rf 0.org
+rm -rf wallFunction.org
+cp -rnT lowReWallFunction.org 0.org
+rm -rf lowReWallFunction.org
+fi
+
+if [ "$wall" == "wallFunction" ];
+then
+rm -rf 0.org
+rm -rf lowReWallFunction.org
+cp -rnT wallFunction.org 0.org
+rm -rf wallFunction.org
+fi
+
+rm -rf wallFunction.org
+rm -rf lowReWallFunction.org
+	  
+echo
+
+sed -i "s/NProc/$NProc/g" runSolver
+sed -i "s/\(^[ \t]*endTime\).*[0-9]*;.*$/\1 ${iterations};/g" system/controlDict
+sed -i "s/\(^[ \t]*writeInterval\).*[0-9]*;.*$/\1 ${iterations};/g" system/controlDict
+sed -i "s/\(^[ \t]*RASModel\).*[0-9]*;.*$/\1 ${turbulenceModel};/g" constant/turbulenceProperties
+sed -i "s/\(^[ \t]*internalField\).*[0-9]*;.*$/\1 uniform ($U 0 0);/g" 0.org/U
+sed -i "s/\(^[ \t]*internalField\).*[0-9]*;.*$/\1 uniform $k;/g" 0.org/k
+sed -i "s/\(^[ \t]*internalField\).*[0-9]*;.*$/\1 uniform $w;/g" 0.org/omega
+sed -i "s/\(^[ \t]*internalField\).*[0-9]*;.*$/\1 uniform $epsilon;/g" 0.org/epsilon
+sed -i "s/\(^[ \t]*magUInf\).*[0-9]*;.*$/\1 ${U};/g" system/forceCoeffs
+
+if [ "$AoA" == "20" ];
+then
+sed -i s/"-0.104 0.041 0.0082"/"-0.0375 0.026 0.0234"/g system/singleGraph
+sed -i s/"0.03 0.01 0.04"/"0.073 0.0098 0.042"/g system/singleGraph
+fi
+
+if [ "$AoA" == "22.5" ];
+then
+sed -i s/"-0.104 0.041 0.0082"/"-0.052 0.033 0.021"/g system/singleGraph
+sed -i s/"0.03 0.01 0.04"/"0.032 0.012 0.033"/g system/singleGraph
+sed -i s/"-0.104 0.041 0.0082"/"-0.102 0.0456 0.0082"/g system/streamLines
+sed -i s/"0.03 0.01 0.04"/"0.032 0.012 0.033"/g system/streamLines
+fi
+
+if [ "$AoA" == "25" ];
+then
+sed -i s/"-0.104 0.041 0.0082"/"-0.062 0.04 0.018"/g system/singleGraph
+sed -i s/"0.03 0.01 0.04"/"0.0637 0.01154 0.038"/g system/singleGraph
+sed -i s/"-0.104 0.041 0.0082"/"-0.062 0.04 0.018"/g system/streamLines
+sed -i s/"0.03 0.01 0.04"/"0.0637 0.01154 0.038"/g system/streamLines
+fi
+
+if [ "$AoA" == "27.5" ];
+then
+sed -i s/"-0.104 0.041 0.0082"/"-0.0977 0.0543 0.0082"/g system/singleGraph
+sed -i s/"0.03 0.01 0.04"/"0.03 0.02 0.038"/g system/singleGraph
+sed -i s/"-0.104 0.041 0.0082"/"-0.0977 0.0543 0.0082"/g system/streamLines
+sed -i s/"0.03 0.01 0.04"/"0.03 0.02 0.038"/g system/streamLines
+fi
+
+if [ "$AoA" == "30" ];
+then
+sed -i s/"-0.104 0.041 0.0082"/"-0.095 0.0585 0.0082"/g system/singleGraph
+sed -i s/"0.03 0.01 0.04"/"0.03 0.02 0.038"/g system/singleGraph
+sed -i s/"-0.104 0.041 0.0082"/"-0.095 0.0585 0.0082"/g system/streamLines
+sed -i s/"0.03 0.01 0.04"/"0.03 0.02 0.038"/g system/streamLines
+fi
+
+if [ "$AoA" == "32.5" ];
+then
+sed -i s/"-0.104 0.041 0.0082"/"-0.1 0.067 0.0058"/g system/singleGraph
+sed -i s/"0.03 0.01 0.04"/"0.0324 0.0175 0.039"/g system/singleGraph
+sed -i s/"-0.104 0.041 0.0082"/"-0.1 0.067 0.0058"/g system/streamLines
+sed -i s/"0.03 0.01 0.04"/"0.0324 0.0175 0.039"/g system/streamLines
+fi
+
+if [ "$AoA" == "35" ];
+then
+sed -i s/"-0.104 0.041 0.0082"/"-0.099 0.071 0.006"/g system/singleGraph
+sed -i s/"0.03 0.01 0.04"/"0.018 0.022 0.037"/g system/singleGraph
+sed -i s/"-0.104 0.041 0.0082"/"-0.099 0.071 0.006"/g system/streamLines
+sed -i s/"0.03 0.01 0.04"/"0.018 0.022 0.037"/g system/streamLines
+fi
+
+if [ "$AoA" == "37.5" ];
+then
+sed -i s/"-0.104 0.041 0.0082"/"-0.092 0.075 0.0063"/g system/singleGraph
+sed -i s/"0.03 0.01 0.04"/"0.054 0.0074 0.048"/g system/singleGraph
+sed -i s/"-0.104 0.041 0.0082"/"-0.092 0.075 0.0063"/g system/streamLines
+sed -i s/"0.03 0.01 0.04"/"0.054 0.0074 0.048"/g system/streamLines
+fi
+
+./runSolver
+
+awk '{print $1,$2,$3,$4,$5,$6,sqrt(($4*$4)+($5*$5)+($6*$6))}' postProcessing/singleGraph/$iterations/line_U.xy >Umag
+
+awk '{if(min>$7||NR==1){min=$7;a[$7]=$0}}END{print a[min]}' Umag >Umin
+
+gnuplot vortexCoreVelocity
+gnuplot residuals_$turbulenceModel
+#gnuplot p_residuals
+
+cp -rf postProcessing/ ../results/$AoA
+cp -rf residualMonitor.png ../results/residualMonitor_$AoA
+#cp -rf p_residualMonitor.png ../results/p_residualMonitor_$AoA
+cp -rf coreVelocity.png ../results/coreVelocity_$AoA
+cp -rf Umin ../results/Umin_$AoA
+
+cd ../
+
+rm -rf mesh
+cp -rnT case case_$AoA
+rm -rf case
+
+#sed -i "s/(/ /g" results/$AoA/fieldMinMax1/0/fieldMinMax.dat
+#sed -i "s/)/ /g" results/$AoA/fieldMinMax1/0/fieldMinMax.dat
+#sed -i "s/(/ /g" results/$AoA/fieldMinMax2/0/fieldMinMax.dat
+#sed -i "s/)/ /g" results/$AoA/fieldMinMax2/0/fieldMinMax.dat
+
+done
+cd results/
+gnuplot normalCoeff
+gnuplot liftCoeff
+gnuplot dragCoeff
+gnuplot yPlus
+gnuplot burst
+cd ../
+
+fi
+#############################################################################################################
+
+if [ "$experiment" == "individualAngle" ];
+then
+for AoA in $AttackAngle
+do
+
+echo "  "
+echo "-------------------------------------------------------------------"
+echo "-------------------------------------------------------------------"
+echo "RUNNING TEST CASE  ${PWD##*/}"
+echo "RANS, mode=incompressible, $turbulenceModel, wall=$wall, NProc=$NProc"
+echo "Re=$Re, U=$U [m/s],nu=$nu , iterations=$iterations, AoA=$AoA"
+echo "-------------------------------------------------------------------"
+echo "-------------------------------------------------------------------"
+
+cp -rnT mesh.org mesh
+cd mesh
+
+if [ "$mesh" == "2" ];
+then
+sed -i "s/\(^[ \t]*mesh\).*[0-9]*;.*$/\1 (72 40 14);/g" system/blockMeshDict
+fi
+
+if [ "$mesh" == "3" ];
+then
+sed -i "s/\(^[ \t]*mesh\).*[0-9]*;.*$/\1 (144 80 28);/g" system/blockMeshDict
+fi
+
+echo 
+
+sed -i "s/NProc/$NProc/g" makeMesh
+sed -i "s/AoA/$AoA/g" makeMesh
+./makeMesh
+cp -rf checkMesh.log ../results/checkMesh_$AoA
+
+cd ../
+
+cp -rnT case.org case
+cd case
+
+if [ "$wall" == "lowRe" ];
+then
+rm -rf 0.org
+rm -rf wallFunction.org
+cp -rnT lowReWallFunction.org 0.org
+rm -rf lowReWallFunction.org
+fi
+
+if [ "$wall" == "wallFunction" ];
+then
+rm -rf 0.org
+rm -rf lowReWallFunction.org
+cp -rnT wallFunction.org 0.org
+rm -rf wallFunction.org
+fi
+
+rm -rf wallFunction.org
+rm -rf lowReWallFunction.org
+
+echo
+
+sed -i "s/NProc/$NProc/g" runSolver
+sed -i "s/\(^[ \t]*endTime\).*[0-9]*;.*$/\1 ${iterations};/g" system/controlDict
+sed -i "s/\(^[ \t]*writeInterval\).*[0-9]*;.*$/\1 ${iterations};/g" system/controlDict
+sed -i "s/\(^[ \t]*RASModel\).*[0-9]*;.*$/\1 ${turbulenceModel};/g" constant/turbulenceProperties
+sed -i "s/\(^[ \t]*internalField\).*[0-9]*;.*$/\1 uniform ($U 0 0);/g" 0.org/U
+sed -i "s/\(^[ \t]*internalField\).*[0-9]*;.*$/\1 uniform $k;/g" 0.org/k
+sed -i "s/\(^[ \t]*internalField\).*[0-9]*;.*$/\1 uniform $w;/g" 0.org/omega
+sed -i "s/\(^[ \t]*internalField\).*[0-9]*;.*$/\1 uniform $epsilon;/g" 0.org/epsilon
+sed -i "s/\(^[ \t]*magUInf\).*[0-9]*;.*$/\1 ${U};/g" system/forceCoeffs
+
+if [ "$AoA" == "20" ];
+then
+sed -i s/"-0.104 0.041 0.0082"/"-0.0375 0.026 0.0234"/g system/singleGraph
+sed -i s/"0.03 0.01 0.04"/"0.073 0.0098 0.042"/g system/singleGraph
+fi
+
+if [ "$AoA" == "22.5" ];
+then
+sed -i s/"-0.104 0.041 0.0082"/"-0.052 0.033 0.021"/g system/singleGraph
+sed -i s/"0.03 0.01 0.04"/"0.032 0.012 0.033"/g system/singleGraph
+sed -i s/"-0.104 0.041 0.0082"/"-0.102 0.0456 0.0082"/g system/streamLines
+sed -i s/"0.03 0.01 0.04"/"0.032 0.012 0.033"/g system/streamLines
+fi
+
+if [ "$AoA" == "25" ];
+then
+sed -i s/"-0.104 0.041 0.0082"/"-0.062 0.04 0.018"/g system/singleGraph
+sed -i s/"0.03 0.01 0.04"/"0.0637 0.01154 0.038"/g system/singleGraph
+sed -i s/"-0.104 0.041 0.0082"/"-0.062 0.04 0.018"/g system/streamLines
+sed -i s/"0.03 0.01 0.04"/"0.0637 0.01154 0.038"/g system/streamLines
+fi
+
+if [ "$AoA" == "27.5" ];
+then
+sed -i s/"-0.104 0.041 0.0082"/"-0.0977 0.0543 0.0082"/g system/singleGraph
+sed -i s/"0.03 0.01 0.04"/"0.03 0.02 0.038"/g system/singleGraph
+sed -i s/"-0.104 0.041 0.0082"/"-0.0977 0.0543 0.0082"/g system/streamLines
+sed -i s/"0.03 0.01 0.04"/"0.03 0.02 0.038"/g system/streamLines
+fi
+
+if [ "$AoA" == "30" ];
+then
+sed -i s/"-0.104 0.041 0.0082"/"-0.095 0.0585 0.0082"/g system/singleGraph
+sed -i s/"0.03 0.01 0.04"/"0.03 0.02 0.038"/g system/singleGraph
+sed -i s/"-0.104 0.041 0.0082"/"-0.095 0.0585 0.0082"/g system/streamLines
+sed -i s/"0.03 0.01 0.04"/"0.03 0.02 0.038"/g system/streamLines
+fi
+
+if [ "$AoA" == "32.5" ];
+then
+sed -i s/"-0.104 0.041 0.0082"/"-0.1 0.067 0.0058"/g system/singleGraph
+sed -i s/"0.03 0.01 0.04"/"0.0324 0.0175 0.039"/g system/singleGraph
+sed -i s/"-0.104 0.041 0.0082"/"-0.1 0.067 0.0058"/g system/streamLines
+sed -i s/"0.03 0.01 0.04"/"0.0324 0.0175 0.039"/g system/streamLines
+fi
+
+if [ "$AoA" == "35" ];
+then
+sed -i s/"-0.104 0.041 0.0082"/"-0.099 0.071 0.006"/g system/singleGraph
+sed -i s/"0.03 0.01 0.04"/"0.018 0.022 0.037"/g system/singleGraph
+sed -i s/"-0.104 0.041 0.0082"/"-0.099 0.071 0.006"/g system/streamLines
+sed -i s/"0.03 0.01 0.04"/"0.018 0.022 0.037"/g system/streamLines
+fi
+
+if [ "$AoA" == "37.5" ];
+then
+sed -i s/"-0.104 0.041 0.0082"/"-0.092 0.075 0.0063"/g system/singleGraph
+sed -i s/"0.03 0.01 0.04"/"0.054 0.0074 0.048"/g system/singleGraph
+sed -i s/"-0.104 0.041 0.0082"/"-0.092 0.075 0.0063"/g system/streamLines
+sed -i s/"0.03 0.01 0.04"/"0.054 0.0074 0.048"/g system/streamLines
+fi
+
+./runSolver
+
+awk '{print $1,$2,$3,$4,$5,$6,sqrt(($4*$4)+($5*$5)+($6*$6))}' postProcessing/singleGraph/$iterations/line_U.xy >Umag
+
+awk '{if(min>$7||NR==1){min=$7;a[$7]=$0}}END{print a[min]}' Umag >Umin
+
+gnuplot vortexCoreVelocity
+gnuplot residuals_$turbulenceModel
+#gnuplot p_residuals
+
+cp -rf postProcessing/ ../results/$AoA
+cp -rf residualMonitor.png ../results/residualMonitor_$AoA
+#cp -rf p_residualMonitor.png ../results/p_residualMonitor_$AoA
+cp -rf coreVelocity.png ../results/coreVelocity_$AoA
+cp -rf Umin ../results/Umin_$AoA
+
+
+cd ../
+
+echo
+
+rm -rf mesh
+cp -rnT case case_$AoA
+rm -rf case
+#sed -i "s/(/ /g" results/$AoA/fieldMinMax1/0/fieldMinMax.dat
+#sed -i "s/)/ /g" results/$AoA/fieldMinMax1/0/fieldMinMax.dat
+#sed -i "s/(/ /g" results/$AoA/fieldMinMax2/0/fieldMinMax.dat
+#sed -i "s/)/ /g" results/$AoA/fieldMinMax2/0/fieldMinMax.dat
+
+done
+cd results/
+gnuplot normalCoeff
+gnuplot liftCoeff
+gnuplot dragCoeff
+gnuplot yPlus
+gnuplot burst
+cd ../
+
+fi
+echo "DONE!!!"
+date >finalTime
+endS=$(date +%s.%N)
+stimeS=$(bc <<< "$endS-$startS")
+mtimeS=$(bc <<< "scale=2; $stimeS/60")
+htimeS=$(bc <<< "scale=2; $stimeS/3600")
+dtimeS=$(bc <<< "scale=2; $htimeS/24")
+echo " ** Simulation done in: $stimeS seconds, $mtimeS minutes or $htimeS hours ($dtimeS days)." >time
+
+

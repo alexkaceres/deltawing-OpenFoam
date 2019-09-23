@@ -1,0 +1,12 @@
+#!/bin/bash
+set term png enhanced size 1560,980
+set output "coreVelocity.png"
+
+set title "Velocity magnitud in vortex core"
+set xlabel "x-position"
+set ylabel "Velocity"
+set grid
+
+plot "Umag" using 1:7 with lines title "coreVelocity", \
+
+bind "s" "unset output ; exit gnuplot"

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+echo " 1. Cleaning mesh."
+rm -rf mesh
+
+echo " 2. Cleaning case."
+rm -rf case
+rm -rf case_*
+
+echo " 3. Cleaning resuls."
+
+rm -rf results 
+

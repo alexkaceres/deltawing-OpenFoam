@@ -1,0 +1,17 @@
+#!/bin/bash
+set term png enhanced size 1560,980
+set output "residualMonitor.png"
+
+set title "Convergence process"
+set xlabel "Iterations"
+set ylabel "Residuals"
+set logscale y;
+plot "< cat simpleFoam.log | grep 'Ux' | cut -d' ' -f9 | tr -d ','"  title 'Ux' w lines,\
+     "< cat simpleFoam.log | grep Uy | cut -d' ' -f9 | tr -d ','"  title 'Uy' w lines,\
+     "< cat simpleFoam.log | grep Uz | cut -d' ' -f9 | tr -d ','"  title 'Uz' w lines,\
+     "< cat simpleFoam.log | grep ' p,' | cut -d' ' -f9 | tr -d ','"  title 'p' w lines,\
+     "< cat simpleFoam.log | grep ' k,' | cut -d' ' -f9 | tr -d ','"  title 'k' w lines,\
+     "< cat simpleFoam.log | grep ' omega,' | cut -d' ' -f9 | tr -d ','"  title 'omega' w lines,\
+
+bind "s" "unset output ; exit gnuplot"
+

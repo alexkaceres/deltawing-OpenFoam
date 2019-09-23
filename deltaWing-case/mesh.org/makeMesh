@@ -1,0 +1,33 @@
+#!/bin/bash
+
+sed -i "s/\(.*numberOfSubdomains[ \t]*\)[0-9].*;/numberOfSubdomains NProc;/g" system/decomposeParDict
+
+#Attack angle
+echo " 1. copy geometry with AttackAngle=AoA"
+cp -r geometries/deltaWing/AoA.stl constant/triSurface/
+mv constant/triSurface/AoA.stl constant/triSurface/deltaWing.stl
+cp -r geometries/cone/AoA.stl constant/triSurface/
+mv constant/triSurface/AoA.stl constant/triSurface/cone.stl
+cp -r geometries/box/AoA.stl constant/triSurface/
+mv constant/triSurface/AoA.stl constant/triSurface/box.stl
+cp -r geometries/box.stl constant/triSurface/
+
+# preparations
+echo " 2. create background mesh (blockMesh)"
+blockMesh | tee blockMesh.log > log.all
+echo " 3. surface feature extract"
+surfaceFeatureExtract| tee surfaceFeatureEdges.log >> log.all
+# mesh creation
+echo " 4. parallel decomposition"
+decomposePar -force | tee decomposePar.log >> log.all
+echo " 5. mesh creation (snappyHexMesh, NProc CPUs)"
+mpiexec -np NProc snappyHexMesh -parallel | tee snappyHexMesh.log >> log.all
+echo " 6. parallel reconstruction"
+reconstructParMesh -latestTime -mergeTol 1e-5 | tee reconstructParMesh.log >> log.all
+echo " 7. check mesh"
+checkMesh -latestTime | tee checkMesh.log >> log.all
+
+# create symbolic link for last timestep of the mesh creation process
+cp -rf 3 last
+
+

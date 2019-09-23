@@ -1,0 +1,103 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  dev                                   |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+convertToMeters 0.0254;
+
+mesh (36 20 10);
+
+vertices
+(
+  (-8 -5 0)
+  (10 -5 0)
+  (10  5 0)
+  (-8  5 0)
+  (-8 -5 3.5)
+  (10 -5 3.5)
+  (10  5 3.5)
+  (-8  5 3.5)
+);
+
+blocks
+(
+//hex (0 1 2 3 4 5 6 7) (18 10 5) simpleGrading (1 1 1)//lcell=2.54 cm (18 10 4)
+//hex (0 1 2 3 4 5 6 7) $mesh simpleGrading (1 ((5 40 8)(95 60 1)) ((95 60 1)(5 40 0.2)))
+//hex (0 1 2 3 4 5 6 7) (22 16 9) simpleGrading (1 ((10 20 2)(90 80 1)) ((80 60 1)(20 40 0.4)))
+hex (0 1 2 3 4 5 6 7) (20 16 8) simpleGrading (1 ((2 25 15)(98 75 1)) ((95 50 1)(5 50 0.01)))
+
+
+);
+
+edges
+(
+);
+
+boundary
+(
+    front
+    {
+        type wall;
+        faces
+        (
+            (4 5 6 7)
+        );
+    }
+
+    back
+    {
+        type symmetryPlane;
+        faces
+        (
+            (0 3 2 1)
+        );
+    }
+    inlet
+    {
+        type patch;
+        faces
+        (
+            (0 4 7 3)
+        );
+    }
+    outlet
+    {
+        type patch;
+        faces
+        (
+            (2 6 5 1)
+        );
+    }
+    lowerWall
+    {
+        type wall;
+        faces
+        (
+            (1 5 4 0)
+
+        );
+    }
+    upperWall
+    {
+        type patch;
+        faces
+        (
+            (3 7 6 2)
+
+        );
+    }
+);
+
+// ************************************************************************* //
